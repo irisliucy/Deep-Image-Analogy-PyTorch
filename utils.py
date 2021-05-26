@@ -78,3 +78,15 @@ def load_image(file_A, resizeRatio=1.0):
     img_A = cv2.resize(ori_AL,None, fx=resizeRatio, fy=resizeRatio, interpolation=cv2.INTER_CUBIC)
 
     return img_A
+
+def save_optical_flow_img(img, orig_img, save_to):
+    nnf = img
+
+    img = np.zeros((nnf.shape[0], nnf.shape[1], 3), dtype=np.uint8)
+    for i in range(nnf.shape[0]):
+        for j in range(nnf.shape[1]):
+            pos = nnf[i, j]
+            img[i, j, 0] = int(255 * (pos[0] / orig_img.shape[1]))
+            img[i, j, 2] = int(255 * (pos[1] / orig_img.shape[0]))
+    cv2.imwrite(save_to, img)
+

@@ -48,6 +48,7 @@ def analogy(img_A, img_BP, config):
             ann_AB = upSample_nnf(ann_AB, data_A_size[curr_layer][2:])
             ann_BA = upSample_nnf(ann_BA, data_B_size[curr_layer][2:])
 
+
         # blend feature
         Ndata_A, response_A = normalize(data_A[curr_layer])
         Ndata_BP, response_BP = normalize(data_BP[curr_layer])
@@ -69,7 +70,16 @@ def analogy(img_A, img_BP, config):
         start_time_2 = time.time()
         ann_BA, _ = propagate(ann_BA, ts2np(Ndata_BP), ts2np(Ndata_B), ts2np(Ndata_AP), ts2np(Ndata_A), sizes[curr_layer],
                               params['iter'], rangee[curr_layer])
-        print("\tElapse: "+str(datetime.timedelta(seconds=time.time()- start_time_2))[:-7])        
+        print("\tElapse: "+str(datetime.timedelta(seconds=time.time()- start_time_2))[:-7])   
+
+        print('saving correspondences ...')
+        save_path = './data/demo/layer_' + str(curr_layer) 
+        save_optical_flow_img(ann_AB, img_BP, save_to=save_path + '_AB.png')
+        save_optical_flow_img(ann_BA, img_A, save_to=save_path+ '_BA.png')
+        
+        # reshape the 3D array to 2D
+        ann_AB_reshaped = ann_AB.reshape(ann_AB.shape[0], -1)
+        np.savetxt('output_AB.out', ann_AB_reshaped, delimiter=',')   # X is an array
 
         if curr_layer >= 4:
             print("### current stage: %d - end | "%(5-curr_layer)+"Elapse: "+str(datetime.timedelta(seconds=time.time()- start_time_1))[:-7]+' ###')
