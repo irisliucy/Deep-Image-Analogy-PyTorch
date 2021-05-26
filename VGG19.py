@@ -32,7 +32,8 @@ class VGG19:
 
         self.device = device
 
-        url = "https://s3-us-west-2.amazonaws.com/jcjohns-models/vgg19-d01eb7cb.pth"
+        #url = "https://s3-us-west-2.amazonaws.com/jcjohns-models/vgg19-d01eb7cb.pth"
+        url = "https://download.pytorch.org/models/vgg19-dcbb9e9d.pth"
         vgg19_model = models.vgg19(pretrained=False)
         vgg19_model.load_state_dict(model_zoo.load_url(url), strict=False)
         self.cnn_temp = vgg19_model.features
@@ -134,7 +135,8 @@ class VGG19:
 
         # ================
         init_loss = go(noise).item()
-        noise = noise.view(-1)
+        #noise = noise.view(-1)
+        noise = noise.reshape(-1)
         for idx in range(1000):
             noise, stat = lbfgs(f, noise, maxIter=iters, gEps=1e-4, histSize=4, lr=lr, display=display)
             if stat in ["LBFGS REACH MAX ITER", "LBFGS BELOW GRADIENT EPS"]:

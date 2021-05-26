@@ -211,7 +211,7 @@ def linesearch(xk, z, f, fk, gk, fkm1, gkm1, maxEvals, lr):
             stat = "LINE SEARCH DONE"
             return alpha, stat, [xk, fk, gk]
 
-        elif np.abs(alpha_high - alpha_low) < 1e-5 and tries > minTries:
+        elif abs(alpha_high - alpha_low) < 1e-5 and tries > minTries:
             stat = "LINE SEARCH FAILED"
             return None, stat, [xk, fk, gk]
 
