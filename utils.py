@@ -96,11 +96,12 @@ def save_optical_flow_img(img, orig_img, save_to):
     img = output_dense_correspondence(img, orig_img)
     cv2.imwrite(save_to, img)
 
-def output_sample_mask(array, orig_array, save_to):
-    dense_corr = output_dense_correspondence(array, orig_array)
-    print(dense_corr.shape)
-    np.save('im_dense_corr.npy', dense_corr) 
+def output_sample_mask(array):
+    print(array.shape)
+    np.save('im_dense_corr.npy', array) 
 
-    dense_corr_reshaped = dense_corr.reshape(dense_corr.shape[0], -1)  # convert 3D array to 2D
+    dense_corr_reshaped = array.reshape(array.shape[0], -1)  # convert 3D array to 2D
     print(dense_corr_reshaped.shape)
+    np.save('output_AB.npy', dense_corr_reshaped) 
+
     # Random Sampling 
