@@ -79,7 +79,7 @@ def analogy(img_A, img_BP, config):
         
         # reshape the 3D array to 2D
         ann_AB_reshaped = ann_AB.reshape(ann_AB.shape[0], -1)
-        np.savetxt('output_AB.out', ann_AB_reshaped, delimiter=',')   # X is an array
+        np.save('output_AB.npy', ann_AB_reshaped)   
 
         if curr_layer >= 4:
             print("### current stage: %d - end | "%(5-curr_layer)+"Elapse: "+str(datetime.timedelta(seconds=time.time()- start_time_1))[:-7]+' ###')

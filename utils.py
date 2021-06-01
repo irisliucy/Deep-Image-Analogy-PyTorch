@@ -79,7 +79,9 @@ def load_image(file_A, resizeRatio=1.0):
 
     return img_A
 
-def save_optical_flow_img(img, orig_img, save_to):
+def output_dense_correspondence(img, orig_img):
+    """ Output dense correspondence
+    """
     nnf = img
 
     img = np.zeros((nnf.shape[0], nnf.shape[1], 3), dtype=np.uint8)
@@ -88,5 +90,17 @@ def save_optical_flow_img(img, orig_img, save_to):
             pos = nnf[i, j]
             img[i, j, 0] = int(255 * (pos[0] / orig_img.shape[1]))
             img[i, j, 2] = int(255 * (pos[1] / orig_img.shape[0]))
+    return img
+
+def save_optical_flow_img(img, orig_img, save_to):
+    img = output_dense_correspondence(img, orig_img)
     cv2.imwrite(save_to, img)
 
+def output_sample_mask(array, orig_array, save_to):
+    dense_corr = output_dense_correspondence(array, orig_array)
+    print(dense_corr.shape)
+    np.save('im_dense_corr.npy', dense_corr) 
+
+    dense_corr_reshaped = dense_corr.reshape(dense_corr.shape[0], -1)  # convert 3D array to 2D
+    print(dense_corr_reshaped.shape)
+    # Random Sampling 
