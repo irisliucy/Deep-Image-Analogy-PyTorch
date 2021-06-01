@@ -77,10 +77,8 @@ def analogy(img_A, img_BP, config):
         save_optical_flow_img(ann_AB, img_BP, save_to=save_path + '_AB.png')
         save_optical_flow_img(ann_BA, img_A, save_to=save_path+ '_BA.png')
         
-        # reshape the 3D array to 2D
-        output_sample_mask(ann_AB)
-
         if curr_layer >= 4:
+            output_sample_mask(ann_AB, img_BP)
             print("### current stage: %d - end | "%(5-curr_layer)+"Elapse: "+str(datetime.timedelta(seconds=time.time()- start_time_1))[:-7]+' ###')
             break
 
@@ -129,6 +127,13 @@ def analogy(img_A, img_BP, config):
     print('\n- reconstruct images A\' and B')
     img_AP = reconstruct_avg(ann_AB, img_BP, sizes[curr_layer], data_A_size[curr_layer][2:], data_B_size[curr_layer][2:])
     img_B = reconstruct_avg(ann_BA, img_A, sizes[curr_layer], data_A_size[curr_layer][2:], data_B_size[curr_layer][2:])
+
+    save_optical_flow_img(ann_AB, img_BP, save_to='./data/demo/AB.png')
+    save_optical_flow_img(ann_BA, img_A, save_to='./data/demo/BA.png')
+    print(ann_AB.shape)
+    np.save('im_dense_corr_AB.npy', ann_AB)
+    print(ann_BA.shape)
+    np.save('im_dense_corr_BA.npy', ann_BA)
     
     img_AP = np.clip(img_AP, 0, 255)
     img_B = np.clip(img_B, 0, 255)    

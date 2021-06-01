@@ -96,12 +96,23 @@ def save_optical_flow_img(img, orig_img, save_to):
     img = output_dense_correspondence(img, orig_img)
     cv2.imwrite(save_to, img)
 
-def output_sample_mask(array):
+def output_sample_mask(array, orig_img):
     print(array.shape)
     np.save('im_dense_corr.npy', array) 
 
-    dense_corr_reshaped = array.reshape(array.shape[0], -1)  # convert 3D array to 2D
-    print(dense_corr_reshaped.shape)
-    np.save('output_AB.npy', dense_corr_reshaped) 
-
     # Random Sampling 
+    # masked = np.random.randint(0, 1, size=array.shape)
+    # np.save('im_mask.npy', masked)
+
+    # Sample from red regions (high cofidence)
+    # in this case, select all pixels with a red value > 0.3
+    img = output_dense_correspondence(array, orig_img)
+    mask = img[..., 0] < 0.3
+    # Set all masked pixels to zero
+    masked = orig_img.copy()
+    masked[mask] = 0
+    np.save('im_mask.npy', masked)
+
+    # Mask input image with binary mask
+    result = cv2.bitwise_and(orig_img, masked)
+    np.save('im_ab.npy', result)
