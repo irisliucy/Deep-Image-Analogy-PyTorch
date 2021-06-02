@@ -1,6 +1,8 @@
-import torch
 import cv2
 import numpy as np
+import torch
+import torch.nn as nn
+from torch.autograd import Variable
 
 def ts2np(x):
     x = x.squeeze(0)
@@ -95,6 +97,59 @@ def output_dense_correspondence(img, orig_img):
 def save_optical_flow_img(img, orig_img, save_to):
     img = output_dense_correspondence(img, orig_img)
     cv2.imwrite(save_to, img)
+
+def warp(x, flo):
+    """
+    warp an image/tensor (im2) back to im1, according to the optical flow
+    # x: [B, C, H, W] (im2)
+    # flo: [B, 2, H, W] flow
+
+    x: [C, H, W] (im2)
+    flo: [2, H, W] flow
+    """
+    x = cv2.resize(x, (224, 224))
+    x = torch.Tensor(x)
+    flo = torch.Tensor(flo)
+    
+   
+    # flo = flo.reshape(1, C, H, W)
+    flo = torch.unsqueeze(flo, dim=0)
+    B, H, W, C = flo.size()
+    flo = flo.permute(0,3,1,2)    
+    x = torch.unsqueeze(x, dim=0)
+    B, H, W, C = x.size()
+    x = x.permute(0,3,1,2)  
+    
+    # B, C, H, W = x.size()
+    # mesh grid 
+    xx = torch.arange(0, W).view(1,-1).repeat(H,1)
+    yy = torch.arange(0, H).view(-1,1).repeat(1,W)
+    xx = xx.view(1,1,H,W).repeat(B,1,1,1)
+    yy = yy.view(1,1,H,W).repeat(B,1,1,1)
+    grid = torch.cat((xx,yy),1).float()
+    # flo = flo.permute(2,0,1)
+
+    if x.is_cuda:
+        grid = grid.cuda()
+    vgrid = Variable(grid) + flo
+
+    # scale grid to [-1,1] 
+    vgrid[:,0,:,:] = 2.0*vgrid[:,0,:,:].clone() / max(W-1,1)-1.0
+    vgrid[:,1,:,:] = 2.0*vgrid[:,1,:,:].clone() / max(H-1,1)-1.0
+    vgrid = vgrid.permute(0,2,3,1)      
+
+    output = nn.functional.grid_sample(x, vgrid)
+    mask = torch.autograd.Variable(torch.ones(x.size())).cuda()
+    mask = nn.functional.grid_sample(mask, vgrid)
+    # if W==128:
+    np.save('im_mask.npy', mask.cpu().data.numpy())
+    np.save('im_warp.npy', output.cpu().data.numpy())
+    
+    mask[mask<0.9999] = 0
+    mask[mask>0] = 1
+    
+    np.save('im_ab.npy', (output*mask).cpu().data.numpy())
+    return output*mask
 
 def output_sample_mask(array, orig_img):
     print(array.shape)

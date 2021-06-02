@@ -78,7 +78,6 @@ def analogy(img_A, img_BP, config):
         save_optical_flow_img(ann_BA, img_A, save_to=save_path+ '_BA.png')
         
         if curr_layer >= 4:
-            output_sample_mask(ann_AB, img_BP)
             print("### current stage: %d - end | "%(5-curr_layer)+"Elapse: "+str(datetime.timedelta(seconds=time.time()- start_time_1))[:-7]+' ###')
             break
 
@@ -130,14 +129,14 @@ def analogy(img_A, img_BP, config):
 
     save_optical_flow_img(ann_AB, img_BP, save_to='./data/demo/AB.png')
     save_optical_flow_img(ann_BA, img_A, save_to='./data/demo/BA.png')
-    print(ann_AB.shape)
     np.save('im_dense_corr_AB.npy', ann_AB)
-    print(ann_BA.shape)
     np.save('im_dense_corr_BA.npy', ann_BA)
+    print(img_BP.shape, ann_AB.shape)
+    warp(img_BP, ann_AB)
+    
     
     img_AP = np.clip(img_AP, 0, 255)
     img_B = np.clip(img_B, 0, 255)    
-
 
     return img_AP, img_B, str(datetime.timedelta(seconds=time.time()- start_time_0))[:-7]
 
