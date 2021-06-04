@@ -33,7 +33,8 @@ def blend(response, f_a, r_bp, alpha=0.8, tau=0.05):
     weight = (response > tau).type(f_a.type()) * alpha
     weight = weight.expand(1, f_a.size(1), weight.size(2), weight.size(3))
 
-    f_ap = f_a*weight + r_bp*(1. - weight)
+    # f_ap = f_a*weight + r_bp*(1. - weight)
+    f_ap = f_a*weight
     return f_ap
 
 
