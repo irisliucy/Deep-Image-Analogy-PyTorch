@@ -33,8 +33,7 @@ def blend(response, f_a, r_bp, alpha=0.8, tau=0.05):
     weight = (response > tau).type(f_a.type()) * alpha
     weight = weight.expand(1, f_a.size(1), weight.size(2), weight.size(3))
 
-    # f_ap = f_a*weight + r_bp*(1. - weight)
-    f_ap = f_a*weight
+    f_ap = f_a*weight + r_bp*(1. - weight)
     return f_ap
 
 
@@ -98,77 +97,3 @@ def output_dense_correspondence(img, orig_img):
 def save_optical_flow_img(img, orig_img, save_to):
     img = output_dense_correspondence(img, orig_img)
     cv2.imwrite(save_to, img)
-
-def warp(x, flo):
-    """
-    warp an image/tensor (im2) back to im1, according to the optical flow
-    # x: [B, C, H, W] (im2)
-    # flo: [B, 2, H, W] flow
-
-    x: [C, H, W] (im2)
-    flo: [2, H, W] flow
-    """
-    x = cv2.resize(x, (224, 224))
-    x = torch.Tensor(x)
-    flo = torch.Tensor(flo)
-    
-   
-    # flo = flo.reshape(1, C, H, W)
-    flo = torch.unsqueeze(flo, dim=0)
-    B, H, W, C = flo.size()
-    flo = flo.permute(0,3,1,2)    
-    x = torch.unsqueeze(x, dim=0)
-    B, H, W, C = x.size()
-    x = x.permute(0,3,1,2)  
-    
-    # B, C, H, W = x.size()
-    # mesh grid 
-    xx = torch.arange(0, W).view(1,-1).repeat(H,1)
-    yy = torch.arange(0, H).view(-1,1).repeat(1,W)
-    xx = xx.view(1,1,H,W).repeat(B,1,1,1)
-    yy = yy.view(1,1,H,W).repeat(B,1,1,1)
-    grid = torch.cat((xx,yy),1).float()
-    # flo = flo.permute(2,0,1)
-
-    if x.is_cuda:
-        grid = grid.cuda()
-    vgrid = Variable(grid) + flo
-
-    # scale grid to [-1,1] 
-    vgrid[:,0,:,:] = 2.0*vgrid[:,0,:,:].clone() / max(W-1,1)-1.0
-    vgrid[:,1,:,:] = 2.0*vgrid[:,1,:,:].clone() / max(H-1,1)-1.0
-    vgrid = vgrid.permute(0,2,3,1)      
-
-    output = nn.functional.grid_sample(x, vgrid)
-    mask = torch.autograd.Variable(torch.ones(x.size())).cuda()
-    mask = nn.functional.grid_sample(mask, vgrid)
-    # if W==128:
-    np.save('im_mask.npy', mask.cpu().data.numpy())
-    np.save('im_warp.npy', output.cpu().data.numpy())
-    
-    mask[mask<0.9999] = 0
-    mask[mask>0] = 1
-    
-    np.save('im_ab.npy', (output*mask).cpu().data.numpy())
-    return output*mask
-
-def output_sample_mask(array, orig_img):
-    print(array.shape)
-    np.save('im_dense_corr.npy', array) 
-
-    # Random Sampling 
-    # masked = np.random.randint(0, 1, size=array.shape)
-    # np.save('im_mask.npy', masked)
-
-    # Sample from red regions (high cofidence)
-    # in this case, select all pixels with a red value > 0.3
-    img = output_dense_correspondence(array, orig_img)
-    mask = img[..., 0] < 0.3
-    # Set all masked pixels to zero
-    masked = orig_img.copy()
-    masked[mask] = 0
-    np.save('im_mask.npy', masked)
-
-    # Mask input image with binary mask
-    result = cv2.bitwise_and(orig_img, masked)
-    np.save('im_ab.npy', result)

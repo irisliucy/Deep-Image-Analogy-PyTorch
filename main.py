@@ -14,6 +14,7 @@ if __name__=="__main__":
     parser.add_argument('--weight', type=int, default=2, choices=[2,3])
     parser.add_argument('--img_A_path', type=str, default='data/demo/ava.png')
     parser.add_argument('--img_BP_path', type=str, default='data/demo/mona.png')
+    parser.add_argument('--base_path', type=str, default='data/demo/ava/')
     parser.add_argument('--use_cuda', type=str2bool, default=True)
 
     args = parser.parse_args()
@@ -44,6 +45,10 @@ if __name__=="__main__":
 
     config['use_cuda'] = args.use_cuda
     config['lr'] = [0.1, 0.005, 0.005, 0.00005]
+    
+    config['base_path'] = args.base_path
+    if not os.path.exists(config['base_path']):
+        os.makedirs(config['base_path'])
 
     # Deep-Image-Analogy
     print("\n##### Deep Image Analogy - start #####")

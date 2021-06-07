@@ -103,17 +103,17 @@ def analogy(img_A, img_BP, config):
         target_BP = np2ts(target_BP_np, device)
         target_A = np2ts(target_A_np, device)
 
-        # print('- deconvolution for feat A\'')
-        # start_time_2 = time.time()
-        # data_AP[curr_layer+1] = model.get_deconvoluted_feat(target_BP, curr_layer, data_AP[next_layer], lr=lr[curr_layer],
-        #                                                       iters=400, display=False)
-        # print("\tElapse: "+str(datetime.timedelta(seconds=time.time()- start_time_2))[:-7])        
+        print('- deconvolution for feat A\'')
+        start_time_2 = time.time()
+        data_AP[curr_layer+1] = model.get_deconvoluted_feat(target_BP, curr_layer, data_AP[next_layer], lr=lr[curr_layer],
+                                                              iters=400, display=False)
+        print("\tElapse: "+str(datetime.timedelta(seconds=time.time()- start_time_2))[:-7])        
 
-        # print('- deconvolution for feat B')
-        # start_time_2 = time.time()        
-        # data_B[curr_layer+1] = model.get_deconvoluted_feat(target_A, curr_layer, data_B[next_layer], lr=lr[curr_layer],
-        #                                                      iters=400, display=False)
-        # print("\tElapse: "+str(datetime.timedelta(seconds=time.time()- start_time_2))[:-7])                
+        print('- deconvolution for feat B')
+        start_time_2 = time.time()        
+        data_B[curr_layer+1] = model.get_deconvoluted_feat(target_A, curr_layer, data_B[next_layer], lr=lr[curr_layer],
+                                                             iters=400, display=False)
+        print("\tElapse: "+str(datetime.timedelta(seconds=time.time()- start_time_2))[:-7])                
 
         # in case of data type inconsistency
         if data_B[curr_layer + 1].type() == torch.cuda.DoubleTensor:
@@ -127,10 +127,11 @@ def analogy(img_A, img_BP, config):
     img_AP = reconstruct_avg(ann_AB, img_BP, sizes[curr_layer], data_A_size[curr_layer][2:], data_B_size[curr_layer][2:])
     img_B = reconstruct_avg(ann_BA, img_A, sizes[curr_layer], data_A_size[curr_layer][2:], data_B_size[curr_layer][2:])
 
-    save_optical_flow_img(ann_AB, img_BP, save_to='./data/demo/AB.png')
-    save_optical_flow_img(ann_BA, img_A, save_to='./data/demo/BA.png')
-    np.save('im_dense_corr_AB.npy', ann_AB)
-    np.save('im_dense_corr_BA.npy', ann_BA)
+
+    save_optical_flow_img(ann_AB, img_BP, save_to=config['base_path'] + 'AB.png')
+    save_optical_flow_img(ann_BA, img_A, save_to=config['base_path'] +'BA.png')
+    np.save(config['base_path'] + 'im_dense_corr_AB.npy', ann_AB)
+    np.save(config['base_path'] + 'im_dense_corr_BA.npy', ann_BA)
     print(img_BP.shape, ann_AB.shape)
     # warp(img_BP, ann_AB)
     
