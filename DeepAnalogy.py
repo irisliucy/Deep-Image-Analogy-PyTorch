@@ -128,8 +128,8 @@ def analogy(img_A, img_BP, config):
     img_B = reconstruct_avg(ann_BA, img_A, sizes[curr_layer], data_A_size[curr_layer][2:], data_B_size[curr_layer][2:])
 
 
-    save_optical_flow_img(ann_AB, img_BP, save_to=config['base_path'] + 'AB.png')
-    save_optical_flow_img(ann_BA, img_A, save_to=config['base_path'] +'BA.png')
+    # save_optical_flow_img(ann_AB, img_BP, save_to=config['base_path'] + 'AB.png')
+    # save_optical_flow_img(ann_BA, img_A, save_to=config['base_path'] +'BA.png')
     np.save(config['base_path'] + 'im_dense_corr_AB.npy', ann_AB)
     np.save(config['base_path'] + 'im_dense_corr_BA.npy', ann_BA)
     print(img_BP.shape, ann_AB.shape)
