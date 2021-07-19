@@ -79,14 +79,23 @@ def propagate(nnf, feat_A, feat_AP, feat_B, feat_BP, patch_size, iters=2, rand_s
             by, bx = nnf[ay, ax]
             nnd[ay, ax] = cal_dist(ay, ax, by, bx, feat_A, feat_AP, feat_B, feat_BP, A_size, B_size, patch_size)
 
+    print("feature A shape: ", feat_A.shape)
+    
     manager = mp.Manager()
     q = manager.Queue(A_size[1] * A_size[0])
     cpus = min(mp.cpu_count(), A_size[0] // 20 + 1)
     for i in range(iters):
 
         p = Pool(cpus)
-        ax_start, ay_start = 112, 112
-        p.apply_async(pixelmatch, args=(q, ax_start, ay_start,
+        block_size = 3
+        ay_start = 200
+        ay_end= ay_start + block_size
+
+        while ay_start < ay_end:
+            ax_start = 112
+            ax_end = ax_start + block_size
+            while ax_start < ax_end:
+                p.apply_async(pixelmatch, args=(q, ax_start, ay_start,
                                                 cpus,
                                                 nnf, nnd,
                                                 A_size, B_size,
@@ -94,6 +103,9 @@ def propagate(nnf, feat_A, feat_AP, feat_B, feat_BP, patch_size, iters=2, rand_s
                                                 feat_B, feat_BP,
                                                 patch_size,
                                                 rand_search_radius,))
+
+                ax_start += 1
+            ay_start += 1
 
         # ay_start = 0
 
@@ -120,6 +132,8 @@ def propagate(nnf, feat_A, feat_AP, feat_B, feat_BP, patch_size, iters=2, rand_s
 
             nnf[ay, ax] = np.array([ybest, xbest])
             nnd[ay, ax] = dbest
+            print('ay, ax', ay, ax)
+            print(ybest, xbest)
 
     return nnf, nnd
 
