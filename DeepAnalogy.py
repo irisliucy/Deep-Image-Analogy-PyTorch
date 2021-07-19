@@ -21,6 +21,7 @@ def analogy(img_A, img_BP, config):
     else:
         raise NotImplementedError('cpu mode is not supported yet')
 
+    print(img_A.shape, img_BP.shape)
     # preparing data
     img_A_tensor = torch.FloatTensor(img_A.transpose(2, 0, 1))
     img_BP_tensor = torch.FloatTensor(img_BP.transpose(2, 0, 1))
@@ -72,11 +73,6 @@ def analogy(img_A, img_BP, config):
                               params['iter'], rangee[curr_layer])
         print("\tElapse: "+str(datetime.timedelta(seconds=time.time()- start_time_2))[:-7])   
 
-        # print('saving correspondences ...')
-        # save_path = './data/demo/layer_' + str(curr_layer) 
-        # save_optical_flow_img(ann_AB, img_BP, save_to=save_path + '_AB.png')
-        # save_optical_flow_img(ann_BA, img_A, save_to=save_path+ '_BA.png')
-        
         if curr_layer >= 4:
             print("### current stage: %d - end | "%(5-curr_layer)+"Elapse: "+str(datetime.timedelta(seconds=time.time()- start_time_1))[:-7]+' ###')
             break
@@ -95,30 +91,42 @@ def analogy(img_A, img_BP, config):
         data_AP[next_layer] = np2ts(data_AP_np, device)
         data_B[next_layer] = np2ts(data_B_np, device)
 
-        target_BP_np = avg_vote(ann_AB, ts2np(data_BP[curr_layer]), sizes[curr_layer], data_A_size[curr_layer][2:],
-                                data_B_size[curr_layer][2:])
-        target_A_np = avg_vote(ann_BA, ts2np(data_A[curr_layer]), sizes[curr_layer], data_B_size[curr_layer][2:],
-                               data_A_size[curr_layer][2:])
+        # target_BP_np = avg_vote(ann_AB, ts2np(data_BP[curr_layer]), sizes[curr_layer], data_A_size[curr_layer][2:],
+        #                         data_B_size[curr_layer][2:])
+        # target_A_np = avg_vote(ann_BA, ts2np(data_A[curr_layer]), sizes[curr_layer], data_B_size[curr_layer][2:],
+        #                        data_A_size[curr_layer][2:])
 
-        target_BP = np2ts(target_BP_np, device)
-        target_A = np2ts(target_A_np, device)
+        # target_BP = np2ts(target_BP_np, device)
+        # target_A = np2ts(target_A_np, device)
 
-        print('- deconvolution for feat A\'')
-        start_time_2 = time.time()
-        data_AP[curr_layer+1] = model.get_deconvoluted_feat(target_BP, curr_layer, data_AP[next_layer], lr=lr[curr_layer],
-                                                              iters=400, display=False)
-        print("\tElapse: "+str(datetime.timedelta(seconds=time.time()- start_time_2))[:-7])        
+        # print('- deconvolution for feat A\'')
+        # start_time_2 = time.time()
+        # data_AP[curr_layer+1] = model.get_deconvoluted_feat(target_BP, curr_layer, data_AP[next_layer], lr=lr[curr_layer],
+        #                                                       iters=400, display=False)
+        # print("\tElapse: "+str(datetime.timedelta(seconds=time.time()- start_time_2))[:-7])        
 
-        print('- deconvolution for feat B')
-        start_time_2 = time.time()        
-        data_B[curr_layer+1] = model.get_deconvoluted_feat(target_A, curr_layer, data_B[next_layer], lr=lr[curr_layer],
-                                                             iters=400, display=False)
-        print("\tElapse: "+str(datetime.timedelta(seconds=time.time()- start_time_2))[:-7])                
+        # print('- deconvolution for feat B')
+        # start_time_2 = time.time()        
+        # data_B[curr_layer+1] = model.get_deconvoluted_feat(target_A, curr_layer, data_B[next_layer], lr=lr[curr_layer],
+        #                                                      iters=400, display=False)
+        # print("\tElapse: "+str(datetime.timedelta(seconds=time.time()- start_time_2))[:-7])      
+        # 
+        # print('- deconvolution for feat A\'')
+        # start_time_2 = time.time()
+        # data_AP[curr_layer+1] = model.get_deconvoluted_feat(target_BP, curr_layer, data_AP[next_layer], lr=lr[curr_layer],
+        #                                                       iters=400, display=False)
+        # print("\tElapse: "+str(datetime.timedelta(seconds=time.time()- start_time_2))[:-7])        
 
-        # in case of data type inconsistency
-        if data_B[curr_layer + 1].type() == torch.cuda.DoubleTensor:
-            data_B[curr_layer + 1] = data_B[curr_layer + 1].type(torch.cuda.FloatTensor)
-            data_AP[curr_layer + 1] = data_AP[curr_layer + 1].type(torch.cuda.FloatTensor)
+        # print('- deconvolution for feat B')
+        # start_time_2 = time.time()        
+        # data_B[curr_layer+1] = model.get_deconvoluted_feat(target_A, curr_layer, data_B[next_layer], lr=lr[curr_layer],
+        #                                                      iters=400, display=False)
+        # print("\tElapse: "+str(datetime.timedelta(seconds=time.time()- start_time_2))[:-7])                
+
+        # # in case of data type inconsistency
+        # if data_B[curr_layer + 1].type() == torch.cuda.DoubleTensor:
+        #     data_B[curr_layer + 1] = data_B[curr_layer + 1].type(torch.cuda.FloatTensor)
+        #     data_AP[curr_layer + 1] = data_AP[curr_layer + 1].type(torch.cuda.FloatTensor)
         
         print("### current stage: %d - end | "%(5-curr_layer)+"Elapse: "+str(datetime.timedelta(seconds=time.time()- start_time_1))[:-7]+' ###')
 

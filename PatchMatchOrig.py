@@ -74,7 +74,7 @@ def propagate(nnf, feat_A, feat_AP, feat_B, feat_BP, patch_size, iters=2, rand_s
     A_size = feat_A.shape[:2]
     B_size = feat_B.shape[:2]
 
-    for ay in range(A_size[0]):
+    for ay in range(A_size[0]):              # Cons: it calculate every pixel
         for ax in range(A_size[1]):
             by, bx = nnf[ay, ax]
             nnd[ay, ax] = cal_dist(ay, ax, by, bx, feat_A, feat_AP, feat_B, feat_BP, A_size, B_size, patch_size)
@@ -85,13 +85,8 @@ def propagate(nnf, feat_A, feat_AP, feat_B, feat_BP, patch_size, iters=2, rand_s
     for i in range(iters):
 
         p = Pool(cpus)
-
-        ay_start = 0
-
-        while ay_start < A_size[0]:
-            ax_start = 0
-            while ax_start < A_size[1]:
-                p.apply_async(pixelmatch, args=(q, ax_start, ay_start,
+        ax_start, ay_start = 112, 112
+        p.apply_async(pixelmatch, args=(q, ax_start, ay_start,
                                                 cpus,
                                                 nnf, nnd,
                                                 A_size, B_size,
@@ -100,8 +95,22 @@ def propagate(nnf, feat_A, feat_AP, feat_B, feat_BP, patch_size, iters=2, rand_s
                                                 patch_size,
                                                 rand_search_radius,))
 
-                ax_start += A_size[1] // cpus + 1
-            ay_start += A_size[0] // cpus + 1
+        # ay_start = 0
+
+        # while ay_start < A_size[0]:
+        #     ax_start = 0
+        #     while ax_start < A_size[1]:
+        #         p.apply_async(pixelmatch, args=(q, ax_start, ay_start,
+        #                                         cpus,
+        #                                         nnf, nnd,
+        #                                         A_size, B_size,
+        #                                         feat_A, feat_AP,
+        #                                         feat_B, feat_BP,
+        #                                         patch_size,
+        #                                         rand_search_radius,))
+
+        #         ax_start += A_size[1] // cpus + 1
+        #     ay_start += A_size[0] // cpus + 1
 
         p.close()
         p.join()
@@ -272,6 +281,7 @@ def cal_dist(ay, ax, by, bx, feat_A, feat_AP, feat_B, feat_BP, A_size, B_size, p
     dy0 = min(ay, by, dy0)
     dy1 = min(A_size[0] - ay, B_size[0] - by, dy1)
 
+    # bidirectional constriant
     try:
         if feat_A.shape[2] == 3:
             dist1 = np.sum(
@@ -282,7 +292,7 @@ def cal_dist(ay, ax, by, bx, feat_A, feat_AP, feat_B, feat_BP, A_size, B_size, p
             dist1 = -np.sum(feat_A[ay - dy0:ay + dy1, ax - dx0:ax + dx1] * feat_B[by - dy0:by + dy1, bx - dx0:bx + dx1])
             dist2 = -np.sum(
                 feat_AP[ay - dy0:ay + dy1, ax - dx0:ax + dx1] * feat_BP[by - dy0:by + dy1, bx - dx0:bx + dx1])
-        dist = (dist1 + dist2) / ((dx1 + dx0) * (dy1 + dy0))
+        dist = (dist1 + dist2) / ((dx1 + dx0) * (dy1 + dy0))  # normalized features
         # dist = clamp(dist, -np.inf, cutoff)
     except Exception as e:
         print(e)
@@ -327,6 +337,38 @@ def reconstruct_avg(nnf, img, patch_size, A_size, B_size):
 
             if count > 0:
                 final[ay, ax] /= count
-
+                #TODO add different weights for different layers
+    print('shape of final', final.shape)
     return final
+
+def reconstruct_weighted(nnf, img, patch_size, A_size, B_size):
+    assert img.shape[0] == B_size[0] and img.shape[1] == B_size[1], "[{},{}], [{},{}]".format(img.shape[0],
+                                                                                              img.shape[1], B_size[0],
+                                                                                              B_size[1])
+    final = np.zeros(list(A_size) + [3, ])
+    # ratio = min(A_size[0]/nnf.shape[0], img.shape[1]/nnf.shape[1])
+    # print("ratio:" + str(ratio))
+
+    ah, aw = A_size
+    bh, bw = B_size
+    for ay in range(A_size[0]):
+        for ax in range(A_size[1]):
+
+            count = 0
+            for dy in range(-(patch_size // 2), (patch_size // 2 + 1)):
+                for dx in range(-(patch_size // 2), (patch_size // 2 + 1)):
+
+                    if ((ax + dx) < aw and (ax + dx) >= 0 and (ay + dy) < ah and (ay + dy) >= 0):
+                        by, bx = nnf[ay + dy, ax + dx]
+
+                        if ((bx - dx) < bw and (bx - dx) >= 0 and (by - dy) < bh and (by - dy) >= 0):
+                            count += 1
+                            final[ay, ax, :] += img[by - dy, bx - dx, :]
+
+            if count > 0:
+                final[ay, ax] /= count
+                #TODO add different weights for different layers
+    print('shape of final', final.shape)
+    return final
+
 
